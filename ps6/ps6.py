@@ -217,10 +217,10 @@ class StandardRobot(Robot):
         """
         new_pos = self.pos.getNewPosition(self.direction, self.speed)
         if self.room.isPositionInRoom(new_pos):
-            self.serRobotPosition(new_pos)
+            self.setRobotPosition(new_pos)
             self.room.cleanTileAtPosition(self.pos)
         else:
-            self.angle = random.randrange(360)
+            self.direction = random.randrange(360)
 
 # === Problem 3
 
@@ -242,7 +242,26 @@ def runSimulation(num_robots, speed, width, height, min_coverage, num_trials,
     robot_type: class of robot to be instantiated (e.g. Robot or
                 RandomWalkRobot)
     """
-    raise NotImplementedError
+    visualize = True
+    total_clock_ticks = 0.0
+    for trials in range(num_trials):
+        if visualize:
+            anim = ps6_visualize.RobotVisualization(num_robots, width, height)
+        room = RectangularRoom(width, height)
+        robots = []
+        for i in range(num_robots):
+            robots.append(robot_type(room, speed))
+        if visualize:
+            anim.update(room, robots)
+        while (room.getNumCleanedTiles()/float(room.getNumTiles())) < min_coverage:
+            for robot in robots:
+                robot.updatePositionAndClean()
+            total_clock_ticks += 1
+            if visualize:
+                anim.update(room, robots)
+    if visualize:
+        anim.done()
+    return total_clock_ticks/num_trials
 
 
 # === Problem 4
@@ -271,7 +290,20 @@ class RandomWalkRobot(Robot):
     A RandomWalkRobot is a robot with the "random walk" movement strategy: it
     chooses a new direction at random after each time-step.
     """
-    raise NotImplementedError
+    def updatePositionAndClean(self):
+        """
+        Simulate the passage of a single time-step.
+
+        Move the robot to a new position and mark the tile it is on as having
+        been cleaned.
+        """
+        new_pos = self.pos.getNewPosition(self.direction, self.speed)
+        if self.room.isPositionInRoom(new_pos):
+            self.setRobotPosition(new_pos)
+            self.room.cleanTileAtPosition(self.pos)
+            self.direction = random.randrange(360)
+        else:
+            self.direction = random.randrange(360)
 
 
 # === Problem 6
